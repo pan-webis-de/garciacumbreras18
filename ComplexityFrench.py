@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/home/garciacumbreras18/dist/freeling/APIs/python')
 from ComplexityLanguage import ComplexityLanguage
 import freeling
 import os
@@ -15,9 +17,9 @@ class ComplexityFrench(ComplexityLanguage):
         ComplexityLanguage.__init__(self, lang)
        
         ## Modify this line to be your FreeLing installation directory
-        FREELINGDIR = "/usr/local"
-        DATA = FREELINGDIR+"/share/freeling/"
-        CLASSDIR = "/home/sinai/Experiments/CLEF-PAN/"
+        FREELINGDIR = "/home/garciacumbreras18/dist/freeling"
+        DATA = FREELINGDIR+"/data/"
+        CLASSDIR = ""
         self.lang = lang
         freeling.util_init_locale("default")
 
@@ -50,12 +52,8 @@ class ComplexityFrench(ComplexityLanguage):
         self.tg=freeling.hmm_tagger(DATA+lang+"/tagger.dat",True,2)
         self.sen=freeling.senses(DATA+lang+"/senses.dat")
        
-        
-        
-        #Listas de palabras de Dale-Chall
-        CLASSDIR = "/home/sinai/Experiments/CLEF-PAN/"
      
-        f = open(CLASSDIR + 'DaleChall.txt')
+        f = open(CLASSDIR + '/home/garciacumbreras18/DaleChall.txt')
         lines = f.readlines()
         f.close()
 

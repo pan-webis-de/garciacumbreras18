@@ -17,7 +17,7 @@ class ComplexitySpanish(ComplexityLanguage):
         self.dep=freeling.dep_txala(self.DATA+self.lang+"/dep_txala/dependences.dat", self.parser.get_start_symbol())
         
         # Para leer el texto que introducimos
-        CLASSDIR = "/home/sinai/Experiments/CLEF-PAN/"
+        CLASSDIR = "/home/garciacumbreras18/"
                 
         f = open(CLASSDIR + 'CREA_total.txt')
         lines = f.readlines()

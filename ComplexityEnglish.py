@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/home/garciacumbreras18/dist/freeling/APIs/python')
 from ComplexityLanguage import ComplexityLanguage
 import re
 import math

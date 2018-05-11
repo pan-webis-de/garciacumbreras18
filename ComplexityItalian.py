@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+sys.path.append('/home/garciacumbreras18/dist/freeling/APIs/python')
 import freeling
 import os
 import re
@@ -12,9 +14,9 @@ class ComplexityItalian():
     def __init__(self, lang = 'it'):
                
         ## Modify this line to be your FreeLing installation directory
-        FREELINGDIR = "/usr/local"
-        DATA = FREELINGDIR+"/share/freeling/"
-        CLASSDIR = "/home/sinai/Experiments/CLEF-PAN/"
+        FREELINGDIR = "/home/garciacumbreras18/dist/freeling"
+        DATA = FREELINGDIR+"/data/"
+
         self.DATA = DATA
         self.lang = lang
         freeling.util_init_locale("default")
