@@ -35,6 +35,7 @@ import argparse
 parser = argparse.ArgumentParser(description='PAN2018 author identificator based on text complexity metrics')
 parser.add_argument('-i', type=str, help='input directory')
 parser.add_argument('-o', type=str, help='output directory')
+parser.add_argument('-x', '--axis', type=int, choices=[0,1], default=1, help='apply L2 normalization by sample (1, default) or by feature (0)')
 args = parser.parse_args()
 INPUT_DIR, OUTPUT_DIR = args.i, args.o
 
@@ -181,7 +182,7 @@ for problem in set(complexity_known['problem']):
     train = train.dropna(axis=1, how='any')
     train_target = train['label']
     train_data= train.drop(['problem', 'language', 'candidate', 'filename', 'label'], axis=1)
-    train_data = pd.DataFrame(preprocessing.normalize(train_data, norm='l2'))
+    train_data = pd.DataFrame(preprocessing.normalize(train_data, norm='l2', axis=args.axis))
 
     #
     # Para el test cogemos los textos desconocidos
@@ -190,7 +191,7 @@ for problem in set(complexity_known['problem']):
     test = test.dropna(axis=1, how='any')
     test_target = test['label']    
     test_data = test.drop(['problem', 'language', 'candidate', 'filename', 'label'], axis=1)
-    test_data = pd.DataFrame(preprocessing.normalize(test_data, norm='l2'))
+    test_data = pd.DataFrame(preprocessing.normalize(test_data, norm='l2', axis=args.axis))
 
     # Entrenamos con los textos con candidatos conocidos y predecimos con los datos desconocidos
     y_pred = clf.fit(train_data, train_target).predict(test_data)

@@ -33,8 +33,9 @@ import argparse
 parser = argparse.ArgumentParser(description='PAN2018 author identificator based on POS vectors')
 parser.add_argument('-i', '--input', type=str, help='input directory')
 parser.add_argument('-o', '--output', type=str, help='output directory')
-parser.add_argument('-n', '--ngramsize', type=int, help='maximum n-gram size', choices=[1,2,3], default=2)
+parser.add_argument('-n', '--ngramsize', type=int, help='maximum n-gram size', choices=[1,2,3,4], default=2)
 parser.add_argument('-f',  '--idf', action='store_true', help='apply inverse document frequency', default=False)
+parser.add_argument('-x', '--axis', type=int, choices=[0,1], default=1, help='apply L2 normalization by sample (1, default) or by feature (0)')
 args = parser.parse_args()
 INPUT_DIR, OUTPUT_DIR = args.input, args.output
 
@@ -176,8 +177,9 @@ for problem in set(postf['problem']):
     #
     # Calculamos el modelo de espacio vectorial
     #
-    tfidfVectorizer = TfidfVectorizer(ngram_range=(1, args.ngramsize), use_idf=args.idf, norm='l2')
+    tfidfVectorizer = TfidfVectorizer(ngram_range=(1, args.ngramsize), use_idf=args.idf)
     postf['POStfidf'] = list(tfidfVectorizer.fit_transform(postf['Pos']))
+    
 
 
     #
@@ -188,6 +190,7 @@ for problem in set(postf['problem']):
     train = train.dropna(axis=1, how='any')
     train_target = train['label']
     train_data = np.array(list(train['POStfidf'].apply(lambda x: x.toarray()[0])))
+    train_data = pd.DataFrame(preprocessing.normalize(train_data, norm='l2', axis=args.axis))
 
     #
     # Para el test cogemos los textos desconocidos
@@ -197,6 +200,7 @@ for problem in set(postf['problem']):
     test = test.dropna(axis=1, how='any')
     test_target = test['label']
     test_data = np.array(list(test['POStfidf'].apply(lambda x: x.toarray()[0])))
+    train_data = pd.DataFrame(preprocessing.normalize(train_data, norm='l2', axis=args.axis))
 
     # Entrenamos con los textos con candidatos conocidos y predecimos con los datos desconocidos
     y_pred = clf.fit(train_data, train_target).predict(test_data)
