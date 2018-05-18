@@ -47,6 +47,9 @@ class ComplexitySpanish(ComplexityLanguage):
         self.config += [True, True, True, True, True, True, True, True, True, True, True, True]
         self.metricsStr.extend(['MaxDEPTH','MinDEPTH', 'MeanDEPTH', 'StdDEPTH', 'LC','SSR', 'HUERTA', 'IFSZ', 'POLINI', 'MINIMUN AGE', 'SOL', 'CRAWFORD'])
         
+        self.configExtend += [True, True]
+        self.metricsStrExtend.extend(['MEAN RARE WORDS', 'STD RARE WORDS'])
+        
     def textProcessing(self, text):
         text = text.replace(u'\xa0', u' ').replace('"', '')
         # meter todas las funciones en una patron de los tokens válidos
@@ -166,21 +169,24 @@ class ComplexitySpanish(ComplexityLanguage):
         #Number of rare words
         byfreq = sorted(self.crea, key=self.crea.__getitem__, reverse=True)
         byfreq = byfreq[:1500]
-        count = 0
+        lrarewords = []
         for sentence in self.pos_content_sentences:
+            count = 0
             for w in sentence:
                 if w.get_form().lower() not in byfreq:
                     count +=1
+            lrarewords.append(count)
         
-        N_rw = count
-        self.N_rw = N_rw
+        self.N_rw = sum(lrarewords)
         #print("Number of rare words (N_rw): ", self.N_rw, "\n")
-        
+        self.mean_rw = np.mean(lrarewords)
+        self.std_rw = np.std(lrarewords)
+                
         SSR = 1.609*(self.N_words / self.N_sentences) + 331.8* (self.N_rw /self.N_words) + 22.0 
         self.SSR= SSR
         #print ("SPAULDING SPANISH READABILITY (SSR) ", self.SSR, "\n")
         
-        return self.SSR, self.N_rw 
+        return self.SSR, self.mean_rw, self.std_rw, self.N_rw 
     
     def readability(self):
         
@@ -300,4 +306,28 @@ class ComplexitySpanish(ComplexityLanguage):
                 metrics['CRAWFORD'] = self.yearsCrawford()
               
         return metrics 
+        
+	def calcMetricsExtend(self, text):
+        """ 
+        Calcula la métricas de complejidad activadas en la configuración 
+        """ 
+        self.textProcessing(text)
+        metricsExtend = super().calcMetricsExtend(text) 
+        metricsEsExtend = self.metricsStrExtend
+        
+        ssreadability = None
+        
+        for i in range(len(metricsExtend)-1, len(metricsEsExtend)):
+            
+            if self.configExtend == None or self.configExtend[i] and metricsEsExtend[i] == 'MEAN RARE WORDS':
+                ssreadability = self.ssReadability() 
+                metricsExtend['MEAN RARE WORDS'] = ssreadability[1]
+                
+            if self.configExtend == None or self.configExtend[i] and metricsEsExtend[i] == 'STD RARE WORDS':
+                ssreadability = self.ssReadability() 
+                metricsExtend['STD RARE WORDS'] = ssreadability[2]
+                
+        return metricsExtend
+    
+        
  

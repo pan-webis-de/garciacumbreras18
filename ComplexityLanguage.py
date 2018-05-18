@@ -67,6 +67,9 @@ class ComplexityLanguage():
         """
         self.config = [True, True, True, True]
         self.metricsStr = ['AVERAGE PUNCTUATION MARKS', 'SCI', 'ARI', 'MU']
+        self.configExtend = [True, True, True, True, True]
+        self.metricsStrExtend = ['MEAN WORDS', 'STD WORDS','COMPLEX SENTENCES', 'MEAN SYLLABLES', 'STD SYLLABLES']
+       
 
     pass
 
@@ -110,18 +113,22 @@ class ComplexityLanguage():
         #Solo nos interesa contar los tokens que sean signo de puntuación.
         #Number of words.
         punctuation = []
-        lwords = []
+        lsentences=[]
+        
         for words in self.sentences:
+			lwords = []
             for w in words:
                 if re.match('F.*', w.get_tag()):
                     punctuation.append(w.get_form())
                 else:
                     lwords.append(w.get_form())
+            lsentences.append(len(lwords))
 
 
-        self.N_words = len(lwords)
+        self.N_words = sum(lsentences)
         #print('Number of words (N_w): ', self.N_words, '\n' )
-
+		self.mean_words = np.mean(lsentences)
+        self.std_words = np.std(lsentences)
         self.N_punctuation = len(punctuation)
         self.punctuation = punctuation
 
@@ -133,7 +140,7 @@ class ComplexityLanguage():
         self.punctuation_over_words = punctuation_over_words
         #print("PUNCTUATION MARKS = ", self.N_punctuation,'\n')
 
-        return self.punctuation_over_words, self.N_punctuation, self.punctuation, self.N_words
+        return self.punctuation_over_words, self.mean_words, self.std_words, self.N_punctuation, self.punctuation, self.N_words
 
     def sentenceComplexity(self):
 
@@ -199,58 +206,85 @@ class ComplexityLanguage():
 
 
     def mureadability(self):
-
+        
         #Number of syllables and Number of words with 3 or more syllables:tagger
-        N_syllables = 0
         N_syllables3 = 0
-        for words in self.listwords:
-            count=0
-            for character in words:
-                if re.match('a|e|i|o|u|y', character):
-                    N_syllables +=1
-                    count+=1
-            if count>=3:
-                N_syllables3 += 1
-
-        self.N_syllables = N_syllables
+        punctuation = []
+        lsyllablesentence=[]
+        for words in self.sentences:
+            lwords = []
+            N_syllables = 0
+            for w in words:
+                if re.match('F.*', w.get_tag()):
+                    punctuation.append(w.get_form())
+                else:
+                    lwords.append(w.get_form())
+            #print('lwords', lwords)
+            
+            for words in lwords:
+                count=0
+                for character in words:
+                    if re.match('a|e|i|o|u|y', character):
+                        N_syllables+=1
+                        count+=1
+                if count>=3:
+                    N_syllables3+= 1
+                    
+            lsyllablesentence.append(N_syllables)
+            #print('lsyllablesentence', lsyllablesentence)
+        
+        self.N_syllables = sum(lsyllablesentence)
         self.N_syllables3 = N_syllables3
+        self.mean_syllables = np.mean(lsyllablesentence)
+        self.std_syllables = np.std(lsyllablesentence)
+        #print('media', self.mean_syllables)
+        #print('std', self.std_syllables)
 
         #Number of letters
+        listwords = []
+        for words in self.sentences:
+            for w in words:
+                if re.match('F.*', w.get_tag()):
+                    punctuation.append(w.get_form())
+                else:
+                    listwords.append(w.get_form())
+        
         N_letters= 0
         letters = []
         vecletters =[]
-        for word in self.listwords:
+        for word in listwords:
                 if re.match('[a-zA-Z]|á|ó|í|ú|é', word):
                     letters.append(word)
                     N_letters+=len(word)
                     vecletters.append(len(word))
-
+                    
         self.letters = letters
         self.N_letters = N_letters
         self.vecletters = vecletters
-
+        
         x=self.N_letters / self.N_words
         varianza=np.var(self.vecletters)
-
+        
         mu = (self.N_words /(self.N_words-1))*(x/varianza)*100
         #print("READABILITY MU: ", mu, "\n")
         self.mu = mu
-
-        return  self.mu, self.N_syllables, self.N_syllables3, self.letters, self.N_letters, self.vecletters
+      
+        return  self.mu,self.mean_syllables, self.std_syllables, self.N_syllables, self.N_syllables3, self.letters, self.N_letters, self.vecletters
 
     def calcMetrics(self, text):
-        """
-        Calcula la métricas de complejidad activadas en la configuración
-        """
+        """ 
+        Calcula la métricas de complejidad activadas en la configuración 
+        """ 
         self.textProcessing(text)
         metrics = {}
-
+        
         punctuationMarks = None
         autoreadability = None
         sentencecomplexity = None
-
+        mureadability= None
+       
         for i in range(0, len(self.metricsStr)):
-
+            
             if self.config == None or self.config[i] and self.metricsStr[i] == 'AVERAGE PUNCTUATION MARKS':
                 punctuationmarks = self.punctuationMarks()
                 metrics['AVERAGE PUNCTUATION MARKS'] = punctuationmarks[0]
@@ -263,8 +297,43 @@ class ComplexityLanguage():
             if self.config == None or self.config[i] and self.metricsStr[i] == 'MU':
                 mureadability = self. mureadability()
                 metrics['MU'] = mureadability[0]
-
-        return metrics
+                      
+        return metrics 
+    
+    def calcMetricsExtend(self, text):
+        """ 
+        Calcula la métricas de complejidad activadas en la configuración 
+        """ 
+        self.textProcessing(text)
+        metricsExtend = {}
+        
+        punctuationmarks = None
+        sentencecomplexity = None
+        mureadability= None
+        
+        for i in range(0, len(self.metricsStrExtend)):
+            
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'MEAN WORDS':
+                punctuationmarks = self.punctuationMarks()
+                metricsExtend['MEAN WORDS'] = punctuationmarks[1]
+                
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'STD WORDS':
+                punctuationmarks = self.punctuationMarks()
+                metricsExtend['STD WORDS'] = punctuationmarks[2]
+            
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'COMPLEX SENTENCES':
+                sentencecomplexity= self.sentenceComplexity()
+                metricsExtend['COMPLEX SENTENCES'] = sentencecomplexity[1]
+            
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'MEAN SYLLABLES':
+                mureadability = self. mureadability()
+                metricsExtend['MEAN SYLLABLES'] = mureadability[1]
+                
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'STD SYLLABLES':
+                mureadability = self. mureadability()
+                metricsExtend['STD SYLLABLES'] = mureadability[2]
+                
+        return metricsExtend
 
     def getPOS(self, text):
         self.textProcessing(text)

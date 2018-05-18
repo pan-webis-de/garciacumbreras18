@@ -72,28 +72,43 @@ class ComplexityFrench(ComplexityLanguage):
         """
         self.config += [True, True, True]
         self.metricsStr.extend(['KANDEL-MODELS','DALE CHALL', 'SOL'])
+        
+        self.configExtend += [True, True]
+        self.metricsStrExtend.extend(['MEAN RARE WORDS', 'STD RARE WORDS'])
     
      def readability(self):
-            
+     
         #Number of low frequency words   
-        count = 0
+        lrarewords = []
         for sentence in self.pos_content_sentences:
+            count = 0
             for w in sentence:
                 if w.get_form() not in self.listDaleChall:
                     count+=1
-        N_difficultwords = count
+                lrarewords.append(count)
+        #print('lrarewords', lrarewords)
+        #N_difficultwords = count
+        self.N_difficultwords = sum(lrarewords)
+        #print("Number of rare words (N_rw): ", self.N_difficultwords, "\n")
+        self.mean_rw = np.mean(lrarewords)
+        self.std_rw = np.std(lrarewords)
+        #print("mean rare words: ", self.mean_rw)
+        #print("std rare words: ", self.std_rw)
         
         #Number of syllables and Number of words with 3 or more syllables:tagger
         N_syllables = 0
         N_syllables3 = 0
-        for words in self.listwords:
-            count=0
-            for character in words:
+        lwords=[]
+        for sentence in self.pos_content_sentences:
+            for w in sentence:
+                lwords.append(w.get_form())
+                count=0
+            for character in lwords:
                 if re.match('a|e|i|o|u|y', character):
                     N_syllables +=1
                     count+=1
-            if count>=3:
-                N_syllables3 += 1
+                if count>=3:
+                    N_syllables3 += 1
                                   
         self.N_syllables = N_syllables
         self.N_syllables3 = N_syllables3
@@ -103,11 +118,12 @@ class ComplexityFrench(ComplexityLanguage):
         #print("KANDEL-MODELS: ", kandelmodelsreadability, "\n")
         self.kandelmodelsreadability = kandelmodelsreadability
         
-        dalechallreadability =15.79 * (N_difficultwords / self.N_words) + 0.04906 *  (self.N_words / self.N_sentences) 
+        dalechallreadability =15.79 * (self.N_difficultwords / self.N_words) + 0.04906 *  (self.N_words / self.N_sentences) 
         #print("DALE CHALL: ", dalechallreadability, "\n")
         self.dalechallreadability = dalechallreadability
         
-        return self.kandelmodelsreadability, self.dalechallreadability
+        return self.kandelmodelsreadability, self.dalechallreadability, self.mean_rw, self.std_rw
+    
     
      def ageReadability(self):
                         
@@ -142,3 +158,24 @@ class ComplexityFrench(ComplexityLanguage):
         return metrics 
     
     
+     def calcMetricsExtend(self, text):
+        """ 
+        Calcula la métricas de complejidad activadas en la configuración 
+        """ 
+        self.textProcessing(text)
+        metricsExtend = super().calcMetricsExtend(text)      
+        metricsFrExtend = self.metricsStrExtend
+        readability = None
+        
+        for i in range(len(metricsExtend)-1, len(metricsFrExtend)):
+                
+            if self.configExtend == None or self.configExtend[i] and metricsFrExtend[i] == 'MEAN RARE WORDS':
+                readability = self.readability() 
+                metricsExtend['MEAN RARE WORDS'] = readability[2]
+                
+            if self.configExtend == None or self.configExtend[i] and metricsFrExtend[i] == 'STD RARE WORDS':
+                readability = self.readability() 
+                metricsExtend['STD RARE WORDS'] = readability[3]
+                
+        return metricsExtend
+        

@@ -23,7 +23,9 @@ class ComplexityPolish():
         self.config = [True, True, True, True, True, True]
         self.metricsStr = ['AVERAGE PUNCTUATION MARKS', 'ARI', 'FOG', 'FLESCH', 'FLESCH-KINCAID', 'PISAREK']
 
-        pass
+        self.configExtend = [True, True, True, True]
+        self.metricsStrExtend = ['MEAN WORDS', 'STD WORDS', 'MEAN SYLLABLES', 'STD SYLLABLES']
+       
 
     def textProcessing(self, text):
         text = text.replace(u'\xa0', u' ')
@@ -45,7 +47,7 @@ class ComplexityPolish():
         N_text_tokens = len(self.text_tokens)
         self.N_text_tokens = N_text_tokens
         #print('Tokens: ', self.N_text_tokens)
-
+               
         # y ahora reorganizamos las oraciones a partir de los puntos aislados
         sentences = []
         ini = 0
@@ -64,63 +66,80 @@ class ComplexityPolish():
         N_sentences = len(sentences)
         self.N_sentences = N_sentences
         #print('Sentences: ',self.sentences)
-
-
-
+        
         N_charac=0
         for word in self.text_tokens:
             N_charac += len(word)
         self.N_charac = N_charac
         #print('The number the character is: ', self.N_charac)
-
-        N_syllables = 0
-        N_syllables3 = 0
-        for words in self.text_tokens:
-            count=0
-            for character in words:
-                if re.match('a|e|i|o|u|y', character):
-                    N_syllables +=1
-                    count+=1
-            if count>=3:
-                N_syllables3 += 1
-
-        self.N_syllables = N_syllables
-        self.N_syllables3 = N_syllables3
-
-        #print('The number of syllables is: ',self.N_syllables)
-        #print('The number of syllables3 is: ', self.N_syllables3)
-
-        return self.text_tokens, self.N_text_tokens, self.sentences, self.N_sentences, self.N_charac, self.N_syllables, self.N_syllables3
-
+        
+        return self.text_tokens, self.N_text_tokens, self.sentences, self.N_sentences, self.N_charac 
+    
     def punctuationMarks(self):
+
         N_punctuation = 0
         letters = []
+        lsentences = []
         N_letters = 0
-        for word in self.text_tokens:
-            if re.match('[a-zA-Z]|á|ó|í|ú|é', word):
-                letters.append(word)
-                N_letters+=len(word)
-            else:
-                N_punctuation += 1
-
-        self.words = letters
-        self.N_words = len(letters)
-        #print('N_words: ', self.N_words)
+        N_syllables3 = 0
+        lsyllablesentence=[]
+        
+        for words in self.sentences:
+            lwords = []
+            N_syllables = 0
+        
+            for w in words:
+                if re.match('[a-zA-Z]|á|ó|í|ú|é', w):
+                    lwords.append(w)
+                    letters.append(w)
+                    N_letters+=len(w)
+                else:          
+                    N_punctuation += 1
+            lsentences.append(len(lwords))
+            
+            for words in lwords:
+                count=0
+                for character in words:
+                    if re.match('a|e|i|o|u|y', character):
+                        N_syllables+=1
+                        count+=1
+                if count>=3:
+                    N_syllables3+= 1
+                    
+            lsyllablesentence.append(N_syllables)
+        #print('lsyllablesentence', lsyllablesentence)
+        
+        self.N_syllables = sum(lsyllablesentence)
+        self.N_syllables3 = N_syllables3
+        self.mean_syllables = np.mean(lsyllablesentence)
+        self.std_syllables = np.std(lsyllablesentence)
+        #print('media', self.mean_syllables)
+        #print('std', self.std_syllables)
+        #print('list sentences: ',lsentences)
+        self.N_words = sum(lsentences)
+        #print('Number of words (N_w): ', self.N_words, '\n' )
+        self.mean_words = np.mean(lsentences)
+        self.std_words = np.std(lsentences)
+        #print('media', np.mean(lsentences))
+        #print('std', np.std(lsentences))
+        
+        self.words = letters         
         self.N_letters = N_letters
         self.N_punctuation = N_punctuation
-
+     
         if self.N_words == 0:
             punctuation_over_words = 0
         else:
             punctuation_over_words = self.N_punctuation / self.N_words
-
+            
         self.punctuation_over_words = punctuation_over_words
-
+                
         #print('The number of letter is: ', N_letters)
         #print('The list of letter is: ', letters)
         #print('The PUNCTUATION MARKS is: ', self.N_punctuation, '\n')
+        
+        return self.punctuation_over_words, self.mean_words, self.std_words, self.mean_syllables, self.std_syllables, self.N_punctuation, self.words, self.N_words, self.N_letters, self.N_syllables, self.N_syllables3
 
-        return self.punctuation_over_words, self.N_punctuation, self.words, self.N_words, self.N_letters
 
     def readability(self):
 
@@ -198,3 +217,33 @@ class ComplexityPolish():
         self.pos_sentences = pos_sentences
 
         return self.pos_sentences
+        
+     def calcMetricsExtend(self, text):
+        """ 
+        Calcula la métricas de complejidad activadas en la configuración 
+        """ 
+        self.textProcessing(text)
+        metricsExtend = {}
+        
+        textprocessing =None
+        punctuationmarks = None
+        
+        for i in range(0, len(self.metricsStrExtend)):
+            
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'MEAN WORDS':
+                punctuationmarks = self.punctuationMarks()
+                metricsExtend['MEAN WORDS'] = punctuationmarks[1]
+                
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'STD WORDS':
+                punctuationmarks = self.punctuationMarks()
+                metricsExtend['STD WORDS'] = punctuationmarks[2]
+            
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'MEAN SYLLABLES':
+                punctuationmarks = self.punctuationMarks()
+                metricsExtend['MEAN SYLLABLES'] = punctuationmarks[3]
+                
+            if self.configExtend == None or self.configExtend[i] and self.metricsStrExtend[i] == 'STD SYLLABLES':
+                punctuationmarks = self.punctuationMarks()
+                metricsExtend['STD SYLLABLES'] = punctuationmarks[4]
+                
+        return metricsExtend
