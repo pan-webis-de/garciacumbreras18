@@ -113,9 +113,10 @@ for problem in collectionInfo:
             with open(os.path.join(os.path.join(INPUT_DIR,problem['problem-name'], candidate['author-name']), nameFile),'r') as context:
                 content = context.read()
                 context.close()
-                calcmetrics = complexityText.calcMetrics(content)                
+                calcmetrics = complexityText.calcMetrics(content)
+                calcmetrics_ext = complexityText.calcMetricsExtend(content)
                                
-                dfi = pd.DataFrame(calcmetrics, index=[i])
+                dfi = pd.DataFrame({**calcmetrics, **calcmetrics_ext}, index=[i])
                 dfi['problem'] = problem['problem-name']
                 dfi['language'] = problem['language']
                 dfi['candidate'] = candidate['author-name']
@@ -147,8 +148,9 @@ for problem in collectionInfo:
             content = unknown_fhd.read()
             unknown_fhd.close()
             calcmetrics = complexityText.calcMetrics(content)
+            calcmetrics_ext = complexityText.calcMetricsExtend(content)
                                
-            dfi = pd.DataFrame(calcmetrics, index=[i])
+            dfi = pd.DataFrame({**calcmetrics, **calcmetrics_ext}, index=[i])
             dfi['problem'] = problem['problem-name']
             dfi['language'] = problem['language']
             if unknown_candidates and unknown_candidates[unknown_file]:
@@ -191,7 +193,8 @@ for problem in set(complexity_known['problem']):
     #
     test = complexity_unknown.loc[complexity_unknown['problem'] == problem]
     test = test.dropna(axis=1, how='any')
-    test_data = test.drop(['problem', 'language', 'filename'], axis=1)
+    test_target = test['label']    
+    test_data = test.drop(['problem', 'language', 'candidate', 'filename', 'label'], axis=1)
     
     #
     # Normalizamos

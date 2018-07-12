@@ -178,8 +178,7 @@ for problem in set(postf['problem']):
     # Calculamos el modelo de espacio vectorial
     #
     tfidfVectorizer = TfidfVectorizer(ngram_range=(1, args.ngramsize), use_idf=args.idf)
-    postf['POStfidf'] = list(tfidfVectorizer.fit_transform(postf['Pos']))
-    
+    postf['POStfidf'] = list(tfidfVectorizer.fit_transform(postf['Pos']))    
 
 
     #
@@ -190,7 +189,6 @@ for problem in set(postf['problem']):
     train = train.dropna(axis=1, how='any')
     train_target = train['label']
     train_data = np.array(list(train['POStfidf'].apply(lambda x: x.toarray()[0])))
-    train_data = pd.DataFrame(preprocessing.normalize(train_data, norm='l2', axis=args.axis))
 
     #
     # Para el test cogemos los textos desconocidos
@@ -198,9 +196,15 @@ for problem in set(postf['problem']):
     test = postf[postf['filename'].str.contains(r"\bunknown", regex=True)]
     test = test.loc[test['problem'] == problem]
     test = test.dropna(axis=1, how='any')
-    test_target = test['label']
     test_data = np.array(list(test['POStfidf'].apply(lambda x: x.toarray()[0])))
-    train_data = pd.DataFrame(preprocessing.normalize(train_data, norm='l2', axis=args.axis))
+    
+    #
+    # Normalizamos
+    #    
+    data = pd.concat([pd.DataFrame(train_data), pd.DataFrame(test_data)])    
+    data = pd.DataFrame(preprocessing.normalize(data, norm='l2', axis=args.axis))
+    train_data = data.iloc[:train_data.shape[0],:]
+    test_data = data.iloc[train_data.shape[0]:,:]
 
     # Entrenamos con los textos con candidatos conocidos y predecimos con los datos desconocidos
     y_pred = clf.fit(train_data, train_target).predict(test_data)

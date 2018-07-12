@@ -116,7 +116,7 @@ class ComplexityLanguage():
         lsentences=[]
         
         for words in self.sentences:
-			lwords = []
+            lwords = []
             for w in words:
                 if re.match('F.*', w.get_tag()):
                     punctuation.append(w.get_form())
@@ -127,7 +127,7 @@ class ComplexityLanguage():
 
         self.N_words = sum(lsentences)
         #print('Number of words (N_w): ', self.N_words, '\n' )
-		self.mean_words = np.mean(lsentences)
+        self.mean_words = np.mean(lsentences)
         self.std_words = np.std(lsentences)
         self.N_punctuation = len(punctuation)
         self.punctuation = punctuation

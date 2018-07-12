@@ -2,6 +2,7 @@ import sys
 sys.path.append('/home/garciacumbreras18/dist/treetagger')
 
 import nltk
+import numpy as np
 import re
 from treetagger import TreeTagger
 
@@ -208,7 +209,12 @@ class ComplexityPolish():
         pos_sentences = []
         sent = []
         for w in sentences:
-            tag = w[1].split(':')[0]
+            if len(w) < 3:
+                continue
+            if w[1].find(':') == -1:
+                tag = w[1]
+            else:
+                tag = w[1].split(':')[0]
             if tag == 'SENT':
                 pos_sentences.append(sent)
                 sent = []
@@ -218,7 +224,7 @@ class ComplexityPolish():
 
         return self.pos_sentences
         
-     def calcMetricsExtend(self, text):
+    def calcMetricsExtend(self, text):
         """ 
         Calcula la métricas de complejidad activadas en la configuración 
         """ 

@@ -307,7 +307,7 @@ class ComplexitySpanish(ComplexityLanguage):
               
         return metrics 
         
-	def calcMetricsExtend(self, text):
+    def calcMetricsExtend(self, text):
         """ 
         Calcula la métricas de complejidad activadas en la configuración 
         """ 
